@@ -1,0 +1,21 @@
+# ---- Large or generated data: never commit -----------------------------
+.RData
+.RDataTmp*
+.Rhistory
+.Rapp.history
+.Rproj.user/
+
+# ---- macOS --------------------------------------------------------------
+.DS_Store
+
+# ---- Data: keep only the files the app needs at runtime -----------------
+Data/*
+!Data/map_data.rds
+!Data/gemeinden_999_geo.json
+
+# ---- Output: keep only the published 3D plot ----------------------------
+Output/*
+!Output/3D_n_pop_age_week.html
+
+# ---- Local scratch ------------------------------------------------------
+Files/

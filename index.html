@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hospitalisations and temperature in Austria</title>
+<style>
+  :root {
+    --ink: #1c2530;
+    --muted: #5c6b7a;
+    --line: #dbe3ea;
+    --blue: #2166ac;
+    --red: #b2182b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 20px 56px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    background: #f6f8fa;
+    line-height: 1.55;
+  }
+  main { max-width: 780px; margin: 0 auto; }
+  h1 {
+    font-size: 30px;
+    line-height: 1.2;
+    margin: 0 0 8px;
+    letter-spacing: -0.3px;
+  }
+  .subtitle { color: var(--muted); margin: 0 0 32px; font-size: 16px; }
+  .cards { display: grid; gap: 16px; }
+  @media (min-width: 640px) { .cards { grid-template-columns: 1fr 1fr; } }
+  a.card {
+    display: block;
+    padding: 20px 22px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color .15s, box-shadow .15s, transform .15s;
+  }
+  a.card:hover {
+    border-color: #b9c7d4;
+    box-shadow: 0 6px 18px rgba(28, 37, 48, .08);
+    transform: translateY(-1px);
+  }
+  a.card.disabled { pointer-events: none; opacity: .55; }
+  .card h2 { font-size: 17px; margin: 0 0 6px; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .tag {
+    display: inline-block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--blue);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .tag.temp { color: var(--red); }
+  footer {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  footer p { margin: 0 0 6px; }
+  code { font-size: 12px; background: #edf1f5; padding: 1px 5px; border-radius: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Weekly hospitalisations and temperature in Austria</h1>
+  <p class="subtitle">
+    Municipality-level visualisations, 2009&ndash;2018 &middot; master's thesis
+  </p>
+
+  <div class="cards">
+    <a class="card" href="Output/3D_n_pop_age_week.html">
+      <span class="tag">3D surface</span>
+      <h2>Rate by age and week</h2>
+      <p>
+        z = n / pop, x = age, y = ISO week. Pooled over the full period.
+        Opens directly in your browser.
+      </p>
+    </a>
+
+    <a class="card disabled" id="map-card" href="#">
+      <span class="tag temp">Interactive map</span>
+      <h2>Municipality map</h2>
+      <p>
+        Year and week selectors, rate and temperature switch. Live Shiny app
+        &mdash; link coming soon.
+      </p>
+    </a>
+  </div>
+
+  <footer>
+    <p>
+      Rate = <code>n / pop</code>, shown as a raw proportion (0.0000&ndash;0.0123),
+      population-weighted. Age 1 is excluded (no population denominator).
+    </p>
+    <p>
+      Vienna is shown by its 23 districts. Colour scales are fixed across weeks;
+      the rate scale is capped at the 99th percentile.
+    </p>
+  </footer>
+</main>
+</body>
+</html>
