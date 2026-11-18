@@ -6,9 +6,9 @@ weekly temperature and hospitalisations at the municipality level in Austria,
 
 ## Live links
 
-- **Interactive map (Shiny app):** <!-- SHINY_URL --> _coming soon_
-- **Interactive 3D plot (standalone HTML):**
-  https://USERNAME.github.io/REPO/Output/3D_n_pop_age_week.html
+- **Interactive map (standalone HTML):** `Output/map.html`
+- **Interactive 3D plot (standalone HTML):** `Output/3D_n_pop_age_week.html`
+- **Live links:** https://USERNAME.github.io/REPO/
 
 ## What is in this repository
 
@@ -16,19 +16,28 @@ weekly temperature and hospitalisations at the municipality level in Austria,
 | --- | --- |
 | `ui.R`, `server.R` | The two-file Shiny app (municipality map) |
 | `Prepare.Map.Data.R` | Builds the compact `Data/map_data.rds` used by the app |
+| `Build.Static.Map.R` | Builds the self-contained `Output/map.html` |
 | `Shiny.Apps.R` | Builds the standalone 3D surface plot |
 | `Data/map_data.rds` | Precomputed map table (municipality x year x week) |
 | `Data/gemeinden_999_geo.json` | Municipality boundaries (2,117 units) |
+| `Output/map.html` | Self-contained interactive map, no R required |
 | `Output/3D_n_pop_age_week.html` | Self-contained 3D plot, no R required |
 
 ## The map
 
 - Year and ISO-week selectors, 2009-2018.
-- Indicator switch between the crude hospitalisation rate and the mean weekly
-  temperature (`week_t2m_mean`).
+- Indicator switch between the age-standardised hospitalisation rate and the
+  mean weekly temperature (`week_t2m_mean`).
 - Colour scale: blue = low, white = middle, red = high, fixed across weeks.
-- The rate is shown as a raw proportion (`n / pop`, about 0.0000-0.0123), not
-  as a percentage.
+- Rates are age-standardised by direct standardisation to the Austrian age
+  distribution of the same year:
+
+  `rate_std(i, y, w) = sum_a share(y, a) * n(i, y, w, a) / pop(i, y, a)`
+
+  The weights are population shares, so they sum to 1 and the result stays on
+  the same per-capita scale as the crude rate. A district with a young age
+  structure is no longer penalised, which makes districts and years comparable.
+- The rate is shown as a raw proportion (about 0.0000-0.0123), not a percentage.
 - The rate colour scale is capped at the 99th percentile so that very small
   municipalities with extreme rates do not dominate the map.
 
@@ -55,6 +64,12 @@ Only needed if the source data change. `Data/map_data.rds` is built from
 
 ```r
 source("Prepare.Map.Data.R")
+```
+
+Rebuild the static map with:
+
+```r
+source("Build.Static.Map.R")
 ```
 
 Rebuild the 3D plot with:

@@ -19,6 +19,10 @@ library(data.table)
 # ---------------------------------------------------------------------
 map_file <- file.path("Data", "map_data.rds")
 if (!file.exists(map_file)) {
+  # Also works when the app is started from Visuals/.
+  map_file <- file.path("..", "Data", "map_data.rds")
+}
+if (!file.exists(map_file)) {
   stop(
     "Data/map_data.rds not found. Run source('Prepare.Map.Data.R') first.",
     call. = FALSE
@@ -30,7 +34,7 @@ map_dt <- as.data.table(readRDS(map_file))
 # 2. Geojson
 # ---------------------------------------------------------------------
 geojson <- jsonlite::fromJSON(
-  file.path("Data", "gemeinden_999_geo.json"),
+  file.path(dirname(map_file), "gemeinden_999_geo.json"),
   simplifyVector = FALSE
 )
 geo_props <- rbindlist(lapply(geojson$features, function(f) {
@@ -97,7 +101,7 @@ bg_ids <- intersect(unique(map_dt$id), geo_props$iso)
 # ---------------------------------------------------------------------
 # 3. Colour limits and year/week choices
 # ---------------------------------------------------------------------
-rate_zmax  <- as.numeric(quantile(map_dt$rate, 0.99, na.rm = TRUE))
+rate_zmax  <- as.numeric(quantile(map_dt$rate_std, 0.99, na.rm = TRUE))
 temp_range <- range(-5, 30)
 
 year_week <- unique(map_dt[, .(year, week)])
@@ -128,7 +132,7 @@ server <- function(input, output, session) {
     ]
 
     if (input$metric == "rate") {
-      z         <- d$rate
+      z         <- d$rate_std
       zmin      <- 0
       zmax      <- rate_zmax
       cb_title  <- "Rate"
@@ -137,15 +141,15 @@ server <- function(input, output, session) {
         "<b>%{customdata}</b><br>",
         "Year: ", input$year, "<br>",
         "Week: ", input$week, "<br>",
-        "Rate: %{z:.4f}<extra></extra>"
+        "Age-standardised rate: %{z:.4f}<extra></extra>"
       )
-      subtitle <- "Weekly Crude Hospitalisation Rate"
+      subtitle <- "Weekly Age-Standardised Hospitalisation Rate"
     } else {
       z         <- d$t2m_mean
       zmin      <- temp_range[1]
       zmax      <- temp_range[2]
       cb_title  <- "degrees C"
-      cb_format <- ".3f"
+      cb_format <- ".1f"
       hover <- paste0(
         "<b>%{customdata}</b><br>",
         "Year: ", input$year, "<br>",

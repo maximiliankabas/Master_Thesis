@@ -1,6 +1,5 @@
 # =====================================================================
 # Master thesis: weekly temperature and hospitalisations in Austria
-# Data exploration, Granger causality and fixed-effects count models
 # =====================================================================
 # Inputs
 #   Data/merge.RData         hospital discharges
@@ -43,6 +42,7 @@ load(here("Data", "merge.RData"))          # merge: cell-level discharges
 dir.create(here("Output", "Figures"), recursive = TRUE, showWarnings = FALSE)
 dir.create(here("Output", "Tables"), recursive = TRUE, showWarnings = FALSE)
 
+gc()
 merge <- as.data.table(merge)
 merge[, `:=`(
   date     = as.Date(yrweek),
@@ -128,10 +128,10 @@ outlier_share <- sapply(c("n", temp_vars), function(v) {
   mean(merge_iqr[[paste0("IQR.", v)]] != "Normal")
 })
 print(round(100 * outlier_share, 1))
-rm(merge_iqr)
+#rm(merge_iqr)
 
 # =====================================================================
-# 2. Exploratory data analysis: three figures
+# 2. Exploratory data analysis
 # =====================================================================
 
 n_mean   <- mean(merge$n)
@@ -239,6 +239,11 @@ ggsave(here("Output", "Figures", "Fig3_n_and_temperature.png"),
        fig3, width = 10, height = 7, dpi = 300)
 
 
+
+
+######################################################################################################
+# Fixed Effects Model
+######################################################################################################
 library(fixest)
 library(tidyverse)
 
@@ -265,15 +270,14 @@ rates <- merge.complete |> filter(age %in% c(5, 65, 80)) |>
 
 
 
-  ggplot(data = rates, aes(x = yrweek_f, y = rate, group = factor(age), color = factor(age))) +
-  geom_line() +
-  scale_x_discrete(breaks = \(x) x[seq(1, length(x), by = 10)]) +
-  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggplot(data = rates, aes(x = yrweek_f, y = rate, group = factor(age), color = factor(age))) +
+geom_line() +
+scale_x_discrete(breaks = \(x) x[seq(1, length(x), by = 10)]) +
+theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
-  merge.complete<- merge.complete |> 
-  group_by(id) |> mutate(avg_temp = mean(week_t2m_mean, na.rm = TRUE)) |> ungroup()
+merge.complete<- merge.complete |> 
+group_by(id) |> mutate(avg_temp = mean(week_t2m_mean, na.rm = TRUE)) |> ungroup()
 
-summary(model.1)
 
 pearson_chisq <- sum(residuals(model.1, type = "pearson")^2)
 
@@ -293,11 +297,86 @@ summary(model.2 <- fepois(
 ))
 
 summary(model.3 <- fepois(
-  n ~ week_t2m_mean * (I(age^2) + age)| id + yrweek_f,
+  n ~ (week_t2m_mean + I(week_t2m_mean^2)) * (I(age^2) + age)| id + yrweek_f,
   offset = ~log(pop),
   data = merge.complete,
   vcov = ~id + yrweek_f 
 ))
+
+### Visualization Model 3 ----
+
+b <- coef(model.3)
+
+# Define plotting range using observed data
+temp_seq <- seq(
+  quantile(merge.complete$week_t2m_mean, 0.0001, na.rm = TRUE),
+  quantile(merge.complete$week_t2m_mean, 0.9999, na.rm = TRUE),
+  length.out = 100
+)
+
+age_seq <- seq(
+  quantile(merge.complete$age, 0.001, na.rm = TRUE),
+  quantile(merge.complete$age, 0.999, na.rm = TRUE),
+  length.out = 100
+)
+
+# Create prediction grid
+plot_data <- expand_grid(
+  week_t2m_mean = temp_seq,
+  age = age_seq
+) %>%
+  mutate(
+    T = week_t2m_mean,
+    A = age,
+    
+    # Marginal effect of temperature on log incidence rate
+    d_log_mu_dT =
+      b["week_t2m_mean"] +
+      2 * b["I(I(week_t2m_mean^2))"] * T +
+      b["week_t2m_mean:age"] * A +
+      b["week_t2m_mean:I(I(age^2))"] * A^2 +
+      2 * b["I(I(week_t2m_mean^2)):age"] * T * A +
+      2 * b["I(I(week_t2m_mean^2)):I(I(age^2))"] * T * A^2,
+    
+    # Incidence rate ratio for a one-unit increase in temperature
+    IRR = exp(d_log_mu_dT)
+  )
+
+# Heatmap
+ggplot(plot_data, aes(
+  x = week_t2m_mean,
+  y = age,
+  fill = IRR
+)) +
+  geom_raster(interpolate = TRUE) +
+  geom_contour(
+    aes(z = IRR),
+    breaks = 1,
+    color = "black",
+    linewidth = 0.5
+  ) +
+  scale_fill_gradient2(
+    low = "darkgreen",
+    mid = "white",
+    high = "#B2182B",
+    midpoint = 1,
+    name = "IRR\n(per +1°C)"
+  ) +
+  labs(
+    x = "Weekly mean temperature (°C)",
+    y = "Age",
+    title = "Marginal effect of temperature across age",
+    subtitle = "Incidence rate ratio associated with a 1°C increase",
+    caption = "Black contour indicates IRR = 1"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "right"
+  )
+
+### Test -----
+summary(model_test <- feglm(week_t2m_mean ~ 1 | id + yrweek_f, vcov = ~id + yrweek_f, data = merge.complete))
 
 
 lrtest(model.2, model.3)
@@ -352,8 +431,6 @@ diagnostics <- data.frame(
 
 diagnostics
 
-
-library(ggplot2)
 
 b <- coef(model.3)
 
@@ -423,3 +500,32 @@ lines(
   col = "blue",
   lwd = 2
 )
+
+
+
+
+
+### Standardizing rates ----
+
+
+load(here("Data", "popdat_aut.RData"))
+
+pop <- popdat_aut |> group_by(Year, sex, age) |> summarise(pop = sum(pop)) |> ungroup() |> mutate(
+  Sex = case_when(sex == "male"~ "M",
+                  sex == "female" ~ "W")
+) |> select(-sex)
+
+totals <- pop |> group_by(Year) |> summarise(sum = sum(pop)) |> ungroup()
+
+#now retreive age distribution by dividing each age by the total of the year.
+
+
+merge.complete |> group_by(id, age, yrweek, sex) |> mutate(rate_std = n/pull(pop$pop))
+
+
+
+std <- merge.complete |> 
+  group_by(age,sex,id) |> summarise(pop = sum(pop)) |> ungroup()
+
+
+std |> group_by(yrweek_f) |> summarise(sum = sum(pop))

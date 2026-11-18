@@ -78,7 +78,7 @@
   </p>
 
   <div class="cards">
-    <a class="card" href="Output/3D_n_pop_age_week.html">
+    <a class="card" href="../Output/3D_n_pop_age_week.html">
       <span class="tag">3D surface</span>
       <h2>Rate by age and week</h2>
       <p>
@@ -87,20 +87,21 @@
       </p>
     </a>
 
-    <a class="card disabled" id="map-card" href="#">
+    <a class="card" id="map-card" href="../Output/map.html">
       <span class="tag temp">Interactive map</span>
       <h2>Municipality map</h2>
       <p>
-        Year and week selectors, rate and temperature switch. Live Shiny app
-        &mdash; link coming soon.
+        Year and week selectors, age-standardised rate and temperature switch.
+        Runs entirely in your browser.
       </p>
     </a>
   </div>
 
   <footer>
     <p>
-      Rate = <code>n / pop</code>, shown as a raw proportion (0.0000&ndash;0.0123),
-      population-weighted. Age 1 is excluded (no population denominator).
+      Rate = <code>n / pop</code>, age-standardised to the Austrian age
+      distribution of the same year and shown as a raw proportion
+      (about 0.0000&ndash;0.0123). Age 1 is excluded (no population denominator).
     </p>
     <p>
       Vienna is shown by its 23 districts. Colour scales are fixed across weeks;

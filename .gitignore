@@ -13,9 +13,11 @@ Data/*
 !Data/map_data.rds
 !Data/gemeinden_999_geo.json
 
-# ---- Output: keep only the published 3D plot ----------------------------
+# ---- Output: keep only the published HTML maps --------------------------
 Output/*
+!Output/map.html
 !Output/3D_n_pop_age_week.html
 
-# ---- Local scratch ------------------------------------------------------
-Files/
+# ---- Analysis scripts are tracked, their data snapshots are not --------
+Files/*
+!Files/*.R

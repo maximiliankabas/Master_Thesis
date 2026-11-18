@@ -61,17 +61,19 @@ fluidPage(
       radioButtons(
         "metric", "Indicator",
         choices = c(
-          "Crude Hospitalisation Rate" = "rate",
-          "Weekly Mean Temperature"          = "temp"
+          "Age-standardised Hospitalisation Rate" = "rate",
+          "Weekly Mean Temperature"               = "temp"
         ),
         selected = "rate"
       ),
 
       tags$p(
         class = "sidebar-note",
-        "Blue = low values, red = high values. For the rate the colour ",
-        "scale is capped at the 99th percentile so that very small ",
-        "municipalities with extreme rates do not dominate the map."
+        "Blue = low values, red = high values. Rates are age-standardised ",
+        "to the Austrian age distribution of the same year (direct ",
+        "standardisation, ages 0-95). The colour scale is capped at the ",
+        "99th percentile so that very small municipalities with extreme ",
+        "rates do not dominate the map."
       )
     ),
 
